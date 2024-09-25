@@ -3,67 +3,66 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Prediksi Sentimen</title>
-
+        <title>Pemetaan Kemiskinan</title>
         <link
-            href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
             rel="stylesheet"
+            href="{{ url_for('static', filename='css/style.css') }}"
         />
-
-        <link rel="stylesheet" href="../assets/css/style.css">
-        <style>
-            body {
-                padding-top: 50px;
-            }
-            .container {
-                max-width: 600px;
-            }
-            .result {
-                margin-top: 20px;
-            }
-        </style>
     </head>
     <body>
-        <nav class="navbar">
-            <div class="navbar-logo">
-                <img src="../assets/images/5988495.png" alt="Logo" />
-            </div>
-            <div class="navbar-icons">
-                <i class="fas fa-user"></i>
-                <i class="fas fa-bell"></i>
-                <i class="fas fa-cog"></i>
-            </div>
-        </nav>
-        <div
-            class="container border border-black rounded-lg"
-            style="background-color: #f4f4f4; padding: 20px"
-        >
-            <h1 class="text-center mb-4 mt-4">Prediksi Sentimen Ulasan</h1>
-            <form action="/" method="post">
-                <div class="form-group">
-                    <label for="ulasan">Masukkan Ulasan:</label>
-                    <textarea
-                        id="ulasan"
-                        name="ulasan"
-                        class="form-control"
-                        rows="4"
-                        required
-                    ></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary btn-block">
-                    Prediksi
-                </button>
-            </form>
-            {% if hasil_prediksi %}
-            <div class="alert alert-info result text-center">
-                <h6>Hasil Prediksi:</h6>
-                <h2>{{ hasil_prediksi }}</h2>
-            </div>
-            {% endif %}
+        <h1>Pemetaan Kemiskinan</h1>
+
+        <form id="analyzeForm" enctype="multipart/form-data">
+            <label for="image">Unggah Gambar Citra:</label>
+            <input type="file" id="image" name="image" required />
+
+            <label for="text">Masukkan Teks Laporan:</label>
+            <textarea id="text" name="text" required></textarea>
+
+            <button type="submit">Proses</button>
+        </form>
+
+        <div id="result">
+            <h2>Hasil Analisis</h2>
+            <div id="imageResult"></div>
+            <div id="textResult"></div>
         </div>
 
-        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+        <script>
+            document.getElementById("analyzeForm").onsubmit = async function (
+                e,
+            ) {
+                e.preventDefault()
+
+                const formData = new FormData(this)
+                const response = await fetch("/analyze", {
+                    method: "POST",
+                    body: formData,
+                })
+
+                // Cek jika respons tidak ok (status bukan 2xx)
+                if (!response.ok) {
+                    const errorData = await response.json()
+                    alert("Terjadi kesalahan: " + errorData.error)
+                    return
+                }
+
+                const data = await response.json()
+
+                if (data.image_result) {
+                    document.getElementById(
+                        "imageResult",
+                    ).innerHTML = `<img src="${data.image_result}" alt="Processed Image">`
+                }
+                if (data.text_result) {
+                    document.getElementById("textResult").innerHTML = `
+                <p>Entitas: ${data.text_result.entities.join(", ")}</p>
+                <p>Kata Kunci: ${data.text_result.keywords
+                    .map((k) => k[0])
+                    .join(", ")}</p>
+            `
+                }
+            }
+        </script>
     </body>
 </html>
